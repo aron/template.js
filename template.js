@@ -7,7 +7,34 @@
     block: '#',
     not:   '^',
     end:   '/'
-  }, prefixes = [tags.block, tags.not, tags.end], isArray, indexOf;
+  }, prefixes, isArray, indexOf;
+
+  function findEndBlock(tokens, key) {
+    var nested = 0, offset = 0, index, prefix;
+
+    while (true) {
+      // Get the next token.
+      index = indexOf(tokens.slice(offset), key) + offset;
+
+      if (index > -1) {
+        prefix = tokens[index - 1];
+        if (prefix === tags.end) {
+          if (nested === 0) {
+            return index - 2;
+          } else {
+            offset = index + 1;
+            nested -= 1;
+          }
+        } else {
+          offset = index + 1;
+          nested += 1;
+        }
+      } else {
+        break;
+      }
+    }
+    return -1;
+  }
 
   isArray = Array.isArray || function (object) {
     return Object.prototype.toString.call(object) === '[object Array]';
@@ -27,29 +54,6 @@
     }
     return -1;
   };
-
-  function findEndBlock(tokens, key) {
-    var nested = 0, index, prefix;
-    while (true) {
-      // Get the next token.
-      index = indexOf(tokens, key);
-      if (index > -1) {
-        prefix = tokens[index - 1];
-        if (prefix === tags.end) {
-          if (nested === 0) {
-            return index - 2;
-          } else {
-            nested -= 1;
-          }
-        } else {
-          nested += 1;
-        }
-      } else {
-        break;
-      }
-    }
-    return -1;
-  }
 
   // Traverses an object by key path and returns the value of the final key.
   function keypath(object, path, fallback) {
@@ -108,7 +112,7 @@
 
       // Check to see if we have a special block. Otherwise use null.
       prefix = string[0];
-      if (indexOf(prefixes, prefix) > -1) {
+      if (prefixes[prefix]) {
         tokens.push(prefix);
         string = string.slice(1);
       } else {
@@ -134,10 +138,10 @@
     var first = tokens.shift();
     if (first === tags.open) {
       return {
-        start: first,
+        start:  first,
         prefix: tokens.shift(),
-        value: tokens.shift(),
-        end: tokens.shift(),
+        value:  tokens.shift(),
+        end:    tokens.shift(),
         toString: function () {
           return [
             this.start,
@@ -153,7 +157,7 @@
 
   // Parse the tokens array with a cloned array.
   function render(tokens, data) {
-    var compiled = '', parsed, token, key, prefix, index;
+    var compiled = '', parsed, token, filter;
 
     // Walk the tokens array.
     while (tokens.length) {
@@ -164,27 +168,50 @@
         // Update the replaced token.
         parsed = lookup(token, data, tokens);
 
-        if (token.prefix === tags.block) {
-          // Check to see if it's block.
-          index = findEndBlock(tokens, token.value);
-
-          if (index === -1) {
-            throw 'Missing closing block for: ' + token.toString();
-          }
-
-          // We have an end block render index as a new template.
-          parsed = render(tokens.slice(0, index), parsed);
-
-          // Remove the end block token from the array.
-          tokens = tokens.slice(index + 4);
+        if (prefixes[token.prefix]) {
+          filter = {
+            tokens: tokens,
+            token: token,
+            data: parsed
+          };
+          parsed = prefixes[token.prefix](filter);
+          tokens = filter.tokens;
         }
-
       }
+
       compiled += parsed;
     }
 
     return compiled;
   }
+
+  // Plugins.
+  prefixes = {
+    // Block.
+    '#': function (filter) {
+      // Check to see if it's block.
+      var tokens = filter.tokens,
+          index = findEndBlock(tokens, filter.token.value);
+
+      if (index === -1) {
+        throw 'Missing closing block for: ' + filter.token.toString();
+      }
+
+      // Remove the parsed block.
+      filter.tokens = filter.tokens.slice(index);
+
+      // We have an end block render index as a new template.
+      return render(tokens.slice(0, index), filter.data);
+    },
+    // Closing block.
+    '/': function (token, data, tokens) {
+      // Remove the block.
+      return '';
+    },
+    // Conditional block.
+    '^': function () {
+    }
+  };
 
   this.template = function (string, data) {
     var tokens = parse(string);

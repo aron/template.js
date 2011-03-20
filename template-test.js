@@ -59,6 +59,16 @@ vows.describe('template()').addBatch({
           template(topic);
         });
       }
+    },
+    'should render nested blocks': {
+      topic: function () {
+        return template('{{#a}}{{b}}{{#a}}{{d}}{{/a}}{{c}}{{/a}}', {
+          a: {a: {d: 'Two in.'}, b: 'One in.', c: 'One in'}
+        });
+      },
+      'should render correctly': function (topic) {
+        assert.equal(topic, 'One in.Two in.One in');
+      }
     }
   }
 }).export(module);
