@@ -78,6 +78,17 @@ vows.describe('template()').addBatch({
         assert.equal(topic, 'You are logged in');
       }
     },
+    'should render tokens inside the conditional block': {
+      topic: function () {
+        return template('{{#isLoggedIn}}You are logged in as {{name}}{{/isLoggedIn}}', {
+          isLoggedIn: true,
+          name: 'Jeff'
+        });
+      },
+      'It should display the block contents': function (topic) {
+        assert.equal(topic, 'You are logged in as Jeff');
+      }
+    },
     'should NOT render the block if the token is false': {
       topic: function () {
         return template('{{#isLoggedIn}}You are logged in{{/isLoggedIn}}', {isLoggedIn: false});
