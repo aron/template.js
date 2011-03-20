@@ -33,7 +33,6 @@
     while (true) {
       // Get the next token.
       index = indexOf(tokens, key);
-
       if (index > -1) {
         prefix = tokens[index - 1];
         if (prefix === tags.end) {
@@ -45,6 +44,8 @@
         } else {
           nested += 1;
         }
+      } else {
+        break;
       }
     }
     return -1;
@@ -126,56 +127,64 @@
     return tokens;
   }
 
+  // If the next block in the tokens array is a token then
+  // creates a token object and returns it. Otherwise returns
+  // the first item in the token array.
   function getToken(tokens) {
-    return {
-      start: tags.open,
-      prefix: tokens.shift(),
-      value: tokens.shift(),
-      end: tokens.shift(),
-      toString: function () {
-        return [
-          this.start,
-          this.prefix || '',
-          this.value,
-          this.end
-        ].join('');
-      }
-    };
+    var first = tokens.shift();
+    if (first === tags.open) {
+      return {
+        start: first,
+        prefix: tokens.shift(),
+        value: tokens.shift(),
+        end: tokens.shift(),
+        toString: function () {
+          return [
+            this.start,
+            this.prefix || '',
+            this.value,
+            this.end
+          ].join('');
+        }
+      };
+    }
+    return first;
   }
 
   // Parse the tokens array with a cloned array.
   function render(tokens, data) {
-    var compiled = '', token, key, prefix, index;
+    var compiled = '', parsed, token, key, prefix, index;
 
     // Walk the tokens array.
     while (tokens.length) {
-      token = tokens.shift();
+      token = parsed = getToken(tokens);
 
-      // See if we're entering an opening bracket.
-      if (token === tags.open) {
+      // See if we have a token.
+      if (typeof token === 'object') {
         // Update the replaced token.
-        token = lookup(getToken(tokens), data, tokens);
+        parsed = lookup(token, data, tokens);
 
-        if (prefix === tags.block) {
+        if (token.prefix === tags.block) {
           // Check to see if it's block.
-          index = findEndBlock(tokens, key);
+          index = findEndBlock(tokens, token.value);
 
           if (index === -1) {
-            throw 'Missing closing block for: ' + key;
+            throw 'Missing closing block for: ' + token.toString();
           }
 
-          // We have an end block render it as a new template.
-          token  = render(tokens.slice(0, index), {'.': token});
+          // We have an end block render index as a new template.
+          parsed = render(tokens.slice(0, index), parsed);
+
           // Remove the end block token from the array.
           tokens = tokens.slice(index + 4);
         }
 
       }
-      compiled += token;
+      compiled += parsed;
     }
 
     return compiled;
-  };
+  }
 
   this.template = function (string, data) {
     var tokens = parse(string);
