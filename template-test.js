@@ -45,6 +45,12 @@ vows.describe('template()').addBatch({
       assert.equal(topic, 'twenty');
     }
   },
+  'should lookup paths with arrays to find tokens': {
+    topic: template('{{people.0.name}}', {people: [{name: 'bill'}]}),
+    'should find the name bill at the end of the object keypath': function (topic) {
+      assert.equal(topic, 'bill');
+    }
+  },
   '{{#block}}{{/block}}': {
     'should render the contents of a block': {
       topic: template('{{#block}}{{content}}{{/block}}', {block: {content: 'hello'}}),
