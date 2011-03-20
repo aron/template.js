@@ -181,7 +181,37 @@
     /* Reassign the prototype. */
     constructor: Template,
 
-    // Parse the string into an array of tokens.
+    /* Public: Takes a template string and breaks it into an
+     * Array of tokens that can easily be parsed by the renderer.
+     *
+     * For example the template "hello I am {{name}}." will be broken
+     * into six pieces:
+     *
+     * ["Hello I am ", "{{", null, "name", "}}", "."]
+     *
+     * This makes it very easy to extract tokens from the plain text in the
+     * template. The null in this example indicates that there is no plugin
+     * prefix. If the token starts with a prefix found in the Template.plugins
+     * hash it will be removed from the token an appened to the array.
+     *
+     * For example if we have a "#" plugin registered and the following
+     * template, "{{#block-plugin}}":
+     *
+     * ["{{", "#", "block-plugin", "}}"]
+     *
+     * The parsed Array is then returned for rendering.
+     *
+     * string - A template String.
+     *
+     * Examples
+     *
+     *   var template = 'I like {{0}}, {{1}} and {{2}}';
+     *   template.parse(template);
+     *   // => Returns ["I like ", "{{", null, "0", "}}", ", "
+     *   "{{", null, "1", "}}", " and ", "{{", null, "2", "}}"]
+     *
+     * Returns an Array of tokens.
+     */
     parse: function (string) {
       var tokens = [], prefix, index, result;
 
