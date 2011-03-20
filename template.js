@@ -1,12 +1,41 @@
 /*jslint indent: 2 */
 (function (undefined) {
 
-  var prefixes, isArray, indexOf;
+  var isArray, indexOf;
 
+  /* Public: Tests to see if an object is an Array.
+   *
+   * object - An Object to test.
+   *
+   * Examples
+   *
+   *   isArray([]) // => true
+   *
+   *   isArray({}) // => false
+   *
+   * Returns true if the Object is an Array.
+   */
   isArray = Array.isArray || function (object) {
     return Object.prototype.toString.call(object) === '[object Array]';
   };
 
+  /* Public: Returns the index of the needle within the haystack.
+   * Works with both arrays and strings.
+   *
+   * haystack - An Array/String to search.
+   * needle   - A needle Object to search for.
+   *
+   * Examples
+   *
+   *   indexOf([1,2,3,4], 1); // => Returns 0
+   *
+   *   indexOf([], 'cat'); // => Returns -1
+   *
+   *   indexOf('Bacon', 'a'); // => Returns 1
+   *
+   * Returns index of the first found needle or -1 if the needle was
+   * not found.
+   */
   indexOf = function (haystack, needle) {
     var index, count;
 
@@ -22,6 +51,46 @@
     return -1;
   };
 
+  /* Public: Creates a Template instance that can then be rendered
+   * with different data. The template is parsed into an array of
+   * tokens which can then easily be iterated over to compile a
+   * rendered template.
+   *
+   * The whole process takes three steps.
+   *
+   * 1. Parse the template into an array of tokens.
+   * 2. Find all template tokens in the array and replace them with
+   *    values from the data object.
+   * 3. Allow plugins to manipulate the data.
+   *
+   * Because the process is broken down into several steps a template
+   * can be rendered many times with different data without having to
+   * be reparsed.
+   *
+   * template - The template String containing tokens.
+   * data     - An Object literal of key/value pairs to be supplanted
+   *            into the template.
+   * options  - Custom options for the Template, currently supports:
+   *            tags: An object literal containing open and close
+   *            properties. (default: {open: '{{', close: '}}'}).
+   *
+   * Examples
+   *
+   *   var template = new Template('{{name}}', {name: 'Aron'});
+   *   template.render(); // => Returns "Aron"
+   *
+   *   var template = new Template('{{person.name}} is {{person.age}}');
+   *   template.render({person: {
+   *     name: 'Aron',
+   *     age: 25
+   *   }}); // => Returns "Aron is 25"
+   *
+   *   var template = new Template('<%name%>', {name: 'Tim'}, {
+   *     tags: {open: '<%', close: '%>'}
+   *   }); // => Returns "Tim"
+   *
+   * Returns a new Template instance.
+   */
   function Template(template, data, options) {
     this.template = template;
     this.data     = data || {};
@@ -29,7 +98,12 @@
     this.tokens   = this.parse();
   }
 
+  /* Holds all plugins. */
   Template.plugins  = {};
+
+  /* Default option settings. This can be overidden to save continually
+   * providing an options Object.
+   */
   Template.defaults = {
     tags: {
       open:  '{{',
@@ -37,10 +111,51 @@
     }
   };
 
+  /* Alias of isArray(). Can be used by plugins. */
   Template.isArray = isArray;
+
+  /* Alias of indexOf(). Can be used by plugins. */
   Template.indexOf = indexOf;
 
-  // Traverses an object by key path and returns the value of the final key.
+  /* Public: Traverses an object by key path and returns the value of
+   * the final key. If the key is not found an optional fallback param
+   * is returned. This defaults to null.
+   *
+   * object    - An Object to query.
+   * path      - A dot sepeated keypath String.
+   * fallback  - An optional fallback value to return (default: null).
+   *
+   * Examples
+   *
+   *   var data = {
+   *     tracks: [
+   *     {
+   *       name: 'Michelle',
+   *       url: 'http://www.last.fm/music/The+Beatles/Rubber+Soul/Michelle',
+   *       album: {
+   *         name: 'Rubber Soul'
+   *         url: 'http://www.last.fm/music/The+Beatles/Rubber+Soul'
+   *         tracks: 12
+   *       },
+   *       artist: {
+   *         name: 'The Beatles',
+   *         url: 'http://www.last.fm/music/The+Beatles'
+   *       }
+   *     }
+   *   ]};
+   *
+   *   Template.keypath(data, 'tracks.0.artist.name');
+   *   //=> 'The Beatles'
+   *
+   *   Template.keypath(data, 'tracks.0.duration');
+   *   //=> null
+   *
+   *   Template.keypath(data, 'tracks.0.duration', '2.42');
+   *   //=> '2.42'
+   *
+   * Returns the queried value if found. Otherwise returns null unless a
+   * fallback parameter is provided.
+   */
   Template.keypath = function (object, path, fallback) {
     var keys = (path || '').split('.'),
         key;
@@ -63,6 +178,7 @@
   };
 
   Template.prototype = {
+    /* Reassign the prototype. */
     constructor: Template,
 
     // Parse the string into an array of tokens.
