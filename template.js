@@ -204,12 +204,17 @@
       return render(tokens.slice(0, index), filter.data);
     },
     // Closing block.
-    '/': function (token, data, tokens) {
+    '/': function () {
       // Remove the block.
       return '';
     },
     // Conditional block.
-    '^': function () {
+    '^': function (filter) {
+      var block = prefixes['#'](filter);
+      if (filter.data !== false) {
+        block = '';
+      }
+      return block;
     }
   };
 
