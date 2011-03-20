@@ -250,6 +250,19 @@
       return tokens;
     },
 
+    /* Finds the next occurance of a tag in a string and if found adds it
+     * and any preceeding text to the tokens array. Then returns the rest
+     * of the string. If no tag is found it simply returns the string.
+     *
+     * To determine if a tag was found the result can be compared to the
+     * string passed in as a parameter.
+     *
+     * tokens - An Array of tokens to add to.
+     * string - The current template String.
+     * tag    - The tag to search for, either open/close.
+     *
+     * Returns the template String.
+     */
     _parseTokens: function (tokens, string, tag) {
       var index = string.indexOf(tag);
 
@@ -272,7 +285,7 @@
 
       // Walk the tokens array.
       while (tokens.length) {
-        token = parsed = this.getToken(tokens);
+        token = parsed = this._getToken(tokens);
 
         // See if we have a token.
         if (typeof token === 'object') {
@@ -289,10 +302,15 @@
       return compiled;
     },
 
-    // If the next block in the tokens array is a token then
-    // creates a token object and returns it. Otherwise returns
-    // the first item in the token array.
-    getToken: function (tokens) {
+    /* If the next block in the tokens array is a token then
+     * creates a token object and returns it. Otherwise returns
+     * the first item in the token array.
+     *
+     * tokens - The current tokens Array.
+     *
+     * Returns token Object or String.
+     */
+    _getToken: function (tokens) {
       var first = tokens.shift();
       if (first === this.options.tags.open) {
         return {
@@ -313,7 +331,25 @@
       return first;
     },
 
-    // Handles the lookup of the variables.
+    /* Public: Handles the lookup of the token value for the data
+     * provided.
+     *
+     * token - A token String to lookup.
+     * data  - A data object.
+     *
+     * Examples
+     *
+     *   template.lookup({
+     *     value: 'name',
+     *     start: '{{',
+     *     end:   '}}',
+     *     prefix: null
+     *   }, {name: 'Bill'}); // => "Bill"
+     *
+     *   template.lookup(token, {}); // => "{{name}}"
+     *
+     * Returns found result or the full token.
+     */
     lookup: function lookup(token, data) {
       return Template.keypath(data, token.value, token.toString());
     }
