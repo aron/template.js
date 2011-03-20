@@ -85,6 +85,37 @@ vows.describe('template()').addBatch({
       'It should display the block contents': function (topic) {
         assert.equal(topic, '');
       }
+    },
+    'should render multiple times if the token is an array': {
+      topic: function () {
+        return template('{{#fruits}}<li>{{name}}</li>{{/fruits}}', {
+          'fruits': [{name: 'apple'}, {name: 'orange'}, {name: 'pear'}]
+        });
+      },
+      'should have three list items': function (topic) {
+        assert.equal(topic, '<li>apple</li><li>orange</li><li>pear</li>');
+      }
+    },
+    'should use $ rather than the data if not an object': {
+      topic: function () {
+        return template('{{#fruits}}<li>{{$}}</li>{{/fruits}}', {
+          'fruits': ['apple', 'orange', 'pear']
+        });
+      },
+      'should have three list items': function (topic) {
+        assert.equal(topic, '<li>apple</li><li>orange</li><li>pear</li>');
+      }
+    },
+
+    'should render nothing if the array is empty': {
+      topic: function () {
+        return template('{{#fruits}}<li>{{$}}</li>{{/fruits}}', {
+          'fruits': []
+        });
+      },
+      'should have three list items': function (topic) {
+        assert.equal(topic, '');
+      }
     }
 
   },

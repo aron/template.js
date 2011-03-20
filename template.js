@@ -206,6 +206,19 @@
 
       if (filter.data === false) {
         content = '';
+      } else if (isArray(filter.data)) {
+        return (function () {
+          var items  = [],
+              length = filter.data.length,
+              i = 0, data;
+
+          for (; i < length; i += 1) {
+            data = filter.data[i];
+            data = typeof data === 'object' ? data : {$: data};
+            items.push(render(tokens.slice(0, index), data));
+          }
+          return items.join('');
+        })();
       }
 
       return content;
