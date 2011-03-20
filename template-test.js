@@ -130,13 +130,13 @@ vows.describe('template()').addBatch({
           'fruits': []
         });
       },
-      'should have three list items': function (topic) {
+      'should have no list items': function (topic) {
         assert.equal(topic, '');
       }
     }
 
   },
-  '{{^conditional}}{{/conditional}}': {
+  '{{^invert-conditional}}{{/invert-conditional}}': {
     'should render the block if the token is false': {
       topic: function () {
         return template('{{^isLoggedIn}}You are not logged in{{/isLoggedIn}}', {isLoggedIn: false});
@@ -152,7 +152,16 @@ vows.describe('template()').addBatch({
       'It should display the block contents': function (topic) {
         assert.equal(topic, '');
       }
-    }
+    },
+    'should render the block if the token is empty': {
+      topic: function () {
+        return template('{{^fruits}}No fruits{{/fruits}}', {fruits: []});
+      },
+      'It should display the block contents': function (topic) {
+        assert.equal(topic, 'No fruits');
+      }
+    },
+
   }
 }).export(module);
 
