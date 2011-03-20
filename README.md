@@ -11,6 +11,8 @@ differences are:
  - __NO__ support for functions (yet).
  - Probably missing a few more things I don't use.
 
+[#mustache]: http://mustache.github.com/
+
 Usage
 -----
 
@@ -27,6 +29,10 @@ using [npm][#npm] run:
 Then to run the tests simply enter:
 
     $ vows template-test.js
+
+[#node]: http://nodejs.org/
+[#vows]: http://vowsjs.org/
+[#npm]:  http://npmjs.org/
 
 Licence
 -------
