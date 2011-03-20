@@ -123,7 +123,6 @@ vows.describe('template()').addBatch({
         assert.equal(topic, '<li>apple</li><li>orange</li><li>pear</li>');
       }
     },
-
     'should render nothing if the array is empty': {
       topic: function () {
         return template('{{#fruits}}<li>{{$}}</li>{{/fruits}}', {
@@ -134,7 +133,6 @@ vows.describe('template()').addBatch({
         assert.equal(topic, '');
       }
     }
-
   },
   '{{^invert-conditional}}{{/invert-conditional}}': {
     'should render the block if the token is false': {
@@ -160,8 +158,7 @@ vows.describe('template()').addBatch({
       'It should display the block contents': function (topic) {
         assert.equal(topic, 'No fruits');
       }
-    },
-
+    }
   }
 }).export(module);
 
