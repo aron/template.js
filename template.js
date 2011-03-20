@@ -191,7 +191,8 @@
     '#': function (filter) {
       // Check to see if it's block.
       var tokens = filter.tokens,
-          index = findEndBlock(tokens, filter.token.value);
+          index = findEndBlock(tokens, filter.token.value),
+          content;
 
       if (index === -1) {
         throw 'Missing closing block for: ' + filter.token.toString();
@@ -201,7 +202,13 @@
       filter.tokens = filter.tokens.slice(index);
 
       // We have an end block render index as a new template.
-      return render(tokens.slice(0, index), filter.data);
+      content = render(tokens.slice(0, index), filter.data);
+
+      if (filter.data === false) {
+        content = '';
+      }
+
+      return content;
     },
     // Closing block.
     '/': function () {
@@ -210,10 +217,18 @@
     },
     // Conditional block.
     '^': function (filter) {
-      var block = prefixes['#'](filter);
+      var blockFilter = {
+        data:   true,
+        token:  filter.token,
+        tokens: filter.tokens
+      }, block = prefixes['#'](blockFilter);
+
+      // Restore the updated filters.
+      filter.tokens = blockFilter.tokens;
       if (filter.data !== false) {
         block = '';
       }
+
       return block;
     }
   };

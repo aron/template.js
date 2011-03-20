@@ -69,10 +69,27 @@ vows.describe('template()').addBatch({
       'should render correctly': function (topic) {
         assert.equal(topic, 'One in.Two in.One in');
       }
+    },
+    'should render the block if the token is true': {
+      topic: function () {
+        return template('{{#isLoggedIn}}You are logged in{{/isLoggedIn}}', {isLoggedIn: true});
+      },
+      'It should display the block contents': function (topic) {
+        assert.equal(topic, 'You are logged in');
+      }
+    },
+    'should NOT render the block if the token is false': {
+      topic: function () {
+        return template('{{#isLoggedIn}}You are logged in{{/isLoggedIn}}', {isLoggedIn: false});
+      },
+      'It should display the block contents': function (topic) {
+        assert.equal(topic, '');
+      }
     }
+
   },
   '{{^conditional}}{{/conditional}}': {
-    'It should render the block if the token is false': {
+    'should render the block if the token is false': {
       topic: function () {
         return template('{{^isLoggedIn}}You are not logged in{{/isLoggedIn}}', {isLoggedIn: false});
       },
@@ -80,7 +97,7 @@ vows.describe('template()').addBatch({
         assert.equal(topic, 'You are not logged in');
       }
     },
-    'It should NOT render the block if the token is true': {
+    'should NOT render the block if the token is true': {
       topic: function () {
         return template('{{^isLoggedIn}}You are not logged in{{/isLoggedIn}}', {isLoggedIn: true});
       },
