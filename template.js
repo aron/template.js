@@ -275,7 +275,27 @@
       return string;
     },
 
-    // Parse the tokens array with a cloned array.
+    /* Public: Renders the parsed tokens array.
+     *
+     * Can be used to render a template multiple times using the
+     * same parsed data.
+     *
+     * Works by advances through the array looking for open tags.
+     * Other strings are simply added to the comiled string. Tokens
+     * are removed from the array and replaced with the data returned
+     * from #lookup().
+     *
+     * If a token has a prefix propery and a plugin is registered for
+     * that prefix it will pass the token, the lookup data and the
+     * remaining tokens array to the plugin. The result of the plugin
+     * will then be added to the compile string.
+     *
+     * data - Optional data to render. Uses the .data property if
+     *        not provided.
+     *
+     * Returns compiled String with tokens replaced with values from the
+     * data Object.
+     */
     render: function (data) {
       var tokens   = this.tokens.slice(),
           compiled = '',
@@ -366,6 +386,7 @@
 (function () {
   var Template = this;
 
+  // Finds the closing block for a token. Handles nested blocks.
   function findEndBlock(tokens, key, closePrefix) {
     var nested = 0, offset = 0, index, prefix;
 
@@ -393,7 +414,7 @@
     return -1;
   }
 
-  // Plugins.
+  // Block plugin. Handles positive conditionals and arrays.
   Template.plugins['#'] = function (token, data, tokens) {
     // Check to see if it's block.
     var index = findEndBlock(tokens, token.value, '/'),
@@ -433,13 +454,16 @@
     return content;
   };
 
-    // Closing block.
+  // Closing block. Does nothing but register the '/' prefix for
+  // the block plugin.
   Template.plugins['/'] = function () {
-      // Remove the block.
-      return '';
+    // Remove the block.
+    return '';
   };
 
-  // Conditional block.
+  // Inverse conditional block. Returns the contents of the
+  // block if the value of the token is false. Used as a
+  // else block.
   Template.plugins['^'] = function (token, data, tokens) {
     var block = Template.plugins['#'](token, true, tokens);
 
