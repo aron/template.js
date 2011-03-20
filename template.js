@@ -29,12 +29,16 @@
     this.tokens   = this.parse();
   }
 
+  Template.plugins  = {};
   Template.defaults = {
     tags: {
-     open:  '{{',
-     close: '}}'
+      open:  '{{',
+      close: '}}'
     }
   };
+
+  Template.isArray = isArray;
+  Template.indexOf = indexOf;
 
   // Traverses an object by key path and returns the value of the final key.
   Template.keypath = function (object, path, fallback) {
@@ -81,7 +85,7 @@
 
         // Check to see if we have a special block. Otherwise use null.
         prefix = string[0];
-        if (prefixes[prefix]) {
+        if (Template.plugins[prefix]) {
           tokens.push(prefix);
           string = string.slice(1);
         } else {
@@ -128,11 +132,8 @@
         if (typeof token === 'object') {
           // Update the replaced token.
           parsed = this.lookup(token, data);
-
-          if (prefixes[token.prefix]) {
-            // TODO: Scrap filter and use splice
-            parsed = prefixes[token.prefix].call(this, token, parsed, tokens);
-            //tokens = filter.tokens;
+          if (Template.plugins[token.prefix]) {
+            parsed = Template.plugins[token.prefix].call(this, token, parsed, tokens);
           }
         }
 
@@ -172,12 +173,23 @@
     }
   };
 
+  this.template = function (string, data, options) {
+    return (new Template(string, data, options)).render();
+  };
+  this.template.Template = Template;
+
+}).call(this);
+
+// Plugins
+(function () {
+  var Template = this;
+
   function findEndBlock(tokens, key, closePrefix) {
     var nested = 0, offset = 0, index, prefix;
 
     while (true) {
       // Get the next token.
-      index = indexOf(tokens.slice(offset), key) + offset;
+      index = Template.indexOf(tokens.slice(offset), key) + offset;
 
       if (index > -1) {
         prefix = tokens[index - 1];
@@ -200,68 +212,62 @@
   }
 
   // Plugins.
-  prefixes = {
-    // Block.
-    '#': function (token, data, tokens) {
-      // Check to see if it's block.
-      var index = findEndBlock(tokens, token.value, '/'),
-          content, template;
+  Template.plugins['#'] = function (token, data, tokens) {
+    // Check to see if it's block.
+    var index = findEndBlock(tokens, token.value, '/'),
+        content, template;
 
-      if (index === -1) {
-        throw 'Missing closing block for: ' + token.toString();
+    if (index === -1) {
+      throw 'Missing closing block for: ' + token.toString();
+    }
+
+    // Remove the parsed block. And return it as a template string.
+    content  = tokens.splice(0, tokens.slice(0, index).length).join('');
+    template = new Template(content);
+
+    if (typeof data === 'boolean') {
+      content = template.render(this.data);
+      if (data === false) {
+        content = '';
       }
+    } else if (Template.isArray(data)) {
+      return (function () {
+        var items  = [],
+            length = data.length,
+            i = 0, current;
 
-      // Remove the parsed block. And return it as a template string.
-      content  = tokens.splice(0, tokens.slice(0, index).length).join('');
-      template = new Template(content);
-
-      if (typeof data === 'boolean') {
-        content = template.render(this.data);
-        if (data === false) {
-          content = '';
+        for (; i < length; i += 1) {
+          current = data[i];
+          current = typeof current === 'object' ? current : {$: current};
+          items.push(template.render(current));
         }
-      } else if (isArray(data)) {
-        return (function () {
-          var items  = [],
-              length = data.length,
-              i = 0, current;
+        return items.join('');
+      })();
+    } else {
+      // We have an end block render index as a new template.
+      content = template.render(data);
+    }
 
-          for (; i < length; i += 1) {
-            current = data[i];
-            current = typeof current === 'object' ? current : {$: current};
-            items.push(template.render(current));
-          }
-          return items.join('');
-        })();
-      } else {
-        // We have an end block render index as a new template.
-        content = template.render(data);
-      }
+    return content;
+  };
 
-      return content;
-    },
     // Closing block.
-    '/': function () {
+  Template.plugins['/'] = function () {
       // Remove the block.
       return '';
-    },
-    // Conditional block.
-    '^': function (token, data, tokens) {
-      var block = prefixes['#'](token, true, tokens);
+  };
 
-      // Restore the updated filters.
-      if (data !== false) {
-        block = '';
-      }
+  // Conditional block.
+  Template.plugins['^'] = function (token, data, tokens) {
+    var block = Template.plugins['#'](token, true, tokens);
 
-      return block;
+    // Restore the updated filters.
+    if (data !== false) {
+      block = '';
     }
+
+    return block;
   };
 
-  this.template = function (string, data, options) {
-    var instance = new Template(string, data, options);
-    return instance.render();
-  };
-
-}).call(this);
+}).call(this.template.Template);
 
