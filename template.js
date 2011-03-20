@@ -1,3 +1,9 @@
+/*  Template - v0.1
+ *  Copyright 2011, Aron Carroll
+ *  Released under the MIT license
+ *  More Information: http://github.com/aron/template.js
+ */
+
 /*jslint indent: 2 */
 (function (undefined) {
 
