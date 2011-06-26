@@ -87,7 +87,7 @@
    * http://github.com/documentcloud/backbone/blob/master/backbone.js
    *
    * Replaces &, <, >, ", ', /  characters.
-   * 
+   *
    * string - A String to escape.
    *
    * Examples
@@ -274,6 +274,9 @@
 
       string = string || this.template;
 
+      // Pre-process all triple braces to use the ampersand prefix.
+      string = string.replace(/\{\{\{([^\}]+)\}\}\}/g, '{{&$1}}');
+
       while (true) {
         // find the first open token.
         result = this._parseTokens(tokens, string, this.options.tags.open);
@@ -288,7 +291,7 @@
 
         // Check to see if we have a special block. Otherwise use null.
         prefix = string[0];
-        if (Template.plugins[prefix]) {
+        if (prefix === '&' || Template.plugins[prefix]) {
           tokens.push(prefix);
           string = string.slice(1);
         } else {
@@ -371,7 +374,7 @@
           if (typeof parsed === 'function') {
             parsed = parsed();
           }
-          if (typeof parsed === 'string') {
+          if (typeof parsed === 'string' && token.prefix !== '&') {
             parsed = escapeHTML(parsed);
           }
 

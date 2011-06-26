@@ -21,6 +21,22 @@ vows.describe('template()').addBatch({
       assert.equal(topic, '&amp;, &#x27, &quot;, &#x2F;, &lt;, &gt;');
     }
   },
+  'should NOT escape HTML special characters if prefixed with "&"': {
+    topic: function () {
+      return template('{{&token}}', {token: '&, \', ", /, <, >'});
+    },
+    'token should be replaced with "word"': function (topic) {
+      assert.equal(topic, '&, \', ", /, <, >');
+    }
+  },
+  'should NOT escape HTML special characters if triple braces are used': {
+    topic: function () {
+      return template('{{{token}}}', {token: '&, \', ", /, <, >'});
+    },
+    'token should be replaced with "word"': function (topic) {
+      assert.equal(topic, '&, \', ", /, <, >');
+    }
+  },
   'should throw an error if the closing braces are missing': {
     topic: '{{block',
     'an error should be thrown': function (topic) {
