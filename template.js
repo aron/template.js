@@ -97,15 +97,12 @@
    * Returns a string with HTML special characters escaped.
    */
   escapeHTML = function (string) {
-    if (typeof string === 'string') {
-      string = string.replace(/&(?!\w+;|#\d+;|#x[\da-f]+;)/gi, '&amp;')
+    return string.replace(/&(?!\w+;|#\d+;|#x[\da-f]+;)/gi, '&amp;')
                  .replace(/</g,  '&lt;')
                  .replace(/>/g,  '&gt;')
                  .replace(/"/g,  '&quot;')
                  .replace(/'/g,  '&#x27')
                  .replace(/\//g, '&#x2F;');
-    }
-    return string;
   };
 
   /* Public: Creates a Template instance that can then be rendered
@@ -370,9 +367,12 @@
         // See if we have a token.
         if (typeof token === 'object') {
           // Update the replaced token.
-          parsed = escapeHTML(this.lookup(token, data));
+          parsed = this.lookup(token, data);
           if (typeof parsed === 'function') {
             parsed = parsed();
+          }
+          if (typeof parsed === 'string') {
+            parsed = escapeHTML(parsed);
           }
 
           if (Template.plugins[token.prefix]) {
