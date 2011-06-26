@@ -518,9 +518,7 @@
             i = 0, current;
 
         for (; i < length; i += 1) {
-          current = value[i];
-          current = typeof current === 'object' ? current : current;
-          items.push(template.render(current));
+          items.push(template.render(value[i]));
         }
         return items.join('');
       })();
