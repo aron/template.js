@@ -6,7 +6,6 @@ differences are:
 
  - Supports template re-use.
  - Supports keypaths in tokens.
- - Uses `{{$}}` instead of `{{.}}` inside loops.
  - __NO__ support for partials.
  - __NO__ comments.
  - __NO__ support for functions (yet).

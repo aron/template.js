@@ -407,6 +407,9 @@
      * Returns found result or the full token.
      */
     lookup: function lookup(token, data) {
+      if (token.value === '.') {
+        return data;
+      }
       return Template.keypath(data, token.value, token.toString());
     }
   };
@@ -483,7 +486,7 @@
 
         for (; i < length; i += 1) {
           current = value[i];
-          current = typeof current === 'object' ? current : {$: current};
+          current = typeof current === 'object' ? current : current;
           items.push(template.render(current));
         }
         return items.join('');

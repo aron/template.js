@@ -51,6 +51,12 @@ vows.describe('template()').addBatch({
       assert.equal(topic, 'bill');
     }
   },
+  'should use {{.}} to use a non object as data': {
+    topic: template('{{.}}', 'bill'),
+    'should use bill in the template string': function (topic) {
+      assert.equal(topic, 'bill');
+    }
+  },
   '{{#block}}{{/block}}': {
     'should render the contents of a block': {
       topic: template('{{#block}}{{block.content}}{{/block}}', {block: {content: 'hello'}}),
@@ -115,7 +121,7 @@ vows.describe('template()').addBatch({
     },
     'should use $ rather than the data if not an object': {
       topic: function () {
-        return template('{{#fruits}}<li>{{$}}</li>{{/fruits}}', {
+        return template('{{#fruits}}<li>{{.}}</li>{{/fruits}}', {
           'fruits': ['apple', 'orange', 'pear']
         });
       },
@@ -125,7 +131,7 @@ vows.describe('template()').addBatch({
     },
     'should render nothing if the array is empty': {
       topic: function () {
-        return template('{{#fruits}}<li>{{$}}</li>{{/fruits}}', {
+        return template('{{#fruits}}<li>{{.}}</li>{{/fruits}}', {
           'fruits': []
         });
       },
@@ -135,7 +141,7 @@ vows.describe('template()').addBatch({
     },
     'should render nothing if the object is empty': {
       topic: function () {
-        return template('{{#fruits}}<li>{{$}}</li>{{/fruits}}', {
+        return template('{{#fruits}}<li>{{.}}</li>{{/fruits}}', {
           'fruits': {}
         });
       },
