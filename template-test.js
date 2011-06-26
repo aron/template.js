@@ -53,7 +53,7 @@ vows.describe('template()').addBatch({
   },
   '{{#block}}{{/block}}': {
     'should render the contents of a block': {
-      topic: template('{{#block}}{{content}}{{/block}}', {block: {content: 'hello'}}),
+      topic: template('{{#block}}{{block.content}}{{/block}}', {block: {content: 'hello'}}),
       'the template should say "hello"': function (topic) {
         assert.equal(topic, 'hello');
       }
@@ -68,8 +68,8 @@ vows.describe('template()').addBatch({
     },
     'should render nested blocks': {
       topic: function () {
-        return template('{{#a}}{{b}}{{#a}}{{d}}{{/a}}{{c}}{{/a}}', {
-          a: {a: {d: 'Two in.'}, b: 'One in.', c: 'One in'}
+        return template('{{#a}}{{a.b}}{{#a}}{{a.d.e}}{{/a}}{{a.c}}{{/a}}', {
+          a: {d: {e: 'Two in.'}, b: 'One in.', c: 'One in'}
         });
       },
       'should render correctly': function (topic) {

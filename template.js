@@ -318,7 +318,9 @@
           // Update the replaced token.
           parsed = this.lookup(token, data);
           if (Template.plugins[token.prefix]) {
-            parsed = Template.plugins[token.prefix].call(this, token, parsed, tokens);
+            parsed = Template.plugins[token.prefix].call(
+              this, token, parsed, data, tokens
+            );
           }
         }
 
@@ -420,8 +422,7 @@
     return -1;
   }
 
-  // Block plugin. Handles positive conditionals and arrays.
-  Template.plugins['#'] = function (token, data, tokens) {
+  function getBlockTemplate(token, tokens) {
     // Check to see if it's block.
     var index = findEndBlock(tokens, token.value, '/'),
         content, template;
@@ -431,22 +432,24 @@
     }
 
     // Remove the parsed block. And return it as a template string.
-    content  = tokens.splice(0, tokens.slice(0, index).length).join('');
-    template = new Template(content);
+    content = tokens.splice(0, tokens.slice(0, index).length).join('');
+    return new Template(content);
+  }
 
-    if (typeof data === 'boolean') {
-      content = template.render(this.data);
-      if (data === false) {
-        content = '';
-      }
-    } else if (Template.isArray(data)) {
+  // Block plugin. Handles positive conditionals and arrays.
+  Template.plugins['#'] = function (token, value, data, tokens) {
+    var template = getBlockTemplate(token, tokens);
+
+    if (!value) {
+      content = '';
+    } else if (Template.isArray(value)) {
       return (function () {
         var items  = [],
-            length = data.length,
+            length = value.length,
             i = 0, current;
 
         for (; i < length; i += 1) {
-          current = data[i];
+          current = value[i];
           current = typeof current === 'object' ? current : {$: current};
           items.push(template.render(current));
         }
@@ -470,15 +473,12 @@
   // Inverse conditional block. Returns the contents of the
   // block if the value of the token is false. Used as a
   // else block.
-  Template.plugins['^'] = function (token, data, tokens) {
-    var block = Template.plugins['#'](token, true, tokens);
+  Template.plugins['^'] = function (token, value, data, tokens) {
+    var template = getBlockTemplate(token, tokens),
+        isTruthy = value && !(Template.isArray(value) && !value.length);
 
-    // Restore the updated filters.
-    if (data !== false) {
-      block = '';
-    }
-
-    return block;
+    // We have an end block render index as a new template.
+    return isTruthy ? '' : template.render(data);
   };
 
 }).call(this.template.Template);
