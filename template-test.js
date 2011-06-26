@@ -132,6 +132,24 @@ vows.describe('template()').addBatch({
       'should have no list items': function (topic) {
         assert.equal(topic, '');
       }
+    },
+    'should render nothing if the object is empty': {
+      topic: function () {
+        return template('{{#fruits}}<li>{{$}}</li>{{/fruits}}', {
+          'fruits': {}
+        });
+      },
+      'should have no list items': function (topic) {
+        assert.equal(topic, '');
+      }
+    },
+    'should render nothing if the value is falsey': {
+      topic: new template.Template('{{#key}}contents{{/key}}'),
+      'should return an empty string': function (topic) {
+        assert.equal(topic.render({key: null}), '');
+        assert.equal(topic.render({key: NaN}), '');
+        assert.equal(topic.render({key: ''}), '');
+      }
     }
   },
   '{{^invert-conditional}}{{/invert-conditional}}': {
@@ -151,12 +169,28 @@ vows.describe('template()').addBatch({
         assert.equal(topic, '');
       }
     },
-    'should render the block if the token is empty': {
+    'should render the block if the token is an empty array': {
       topic: function () {
         return template('{{^fruits}}No fruits{{/fruits}}', {fruits: []});
       },
       'It should display the block contents': function (topic) {
         assert.equal(topic, 'No fruits');
+      }
+    },
+    'should render the block if the token is an empty object': {
+      topic: function () {
+        return template('{{^props}}No props{{/props}}', {props: {}});
+      },
+      'It should display the block contents': function (topic) {
+        assert.equal(topic, 'No props');
+      }
+    },
+    'should render the block if the token is an empty string': {
+      topic: function () {
+        return template('{{^message}}No message{{/message}}', {message: ''});
+      },
+      'It should display the block contents': function (topic) {
+        assert.equal(topic, 'No message');
       }
     }
   }

@@ -7,7 +7,7 @@
 /*jslint indent: 2 */
 (function (undefined) {
 
-  var isArray, indexOf;
+  var isArray, isEmpty, indexOf;
 
   /* Public: Tests to see if an object is an Array.
    *
@@ -23,6 +23,31 @@
    */
   isArray = Array.isArray || function (object) {
     return Object.prototype.toString.call(object) === '[object Array]';
+  };
+
+  /* Public: Returns true if the Object/Array/String provided is empty.
+   *
+   * object - The Object to check if it's empty.
+   *
+   * Examples
+   *
+   *   isEmpty([])  //=> true
+   *   isEmpty({})  //=> true
+   *   isEmpty('')  //=> true
+   *   isEmpty([1]) //=> false
+   *
+   * Returns true if the object is empty.
+   */
+  isEmpty = function (object) {
+    if (object.length) {
+      return !object.length;
+    }
+    for (var key in object) {
+      if (object.hasOwnProperty(key)) {
+        return false;
+      }
+    }
+    return true;
   };
 
   /* Public: Returns the index of the needle within the haystack.
@@ -119,6 +144,9 @@
 
   /* Alias of isArray(). Can be used by plugins. */
   Template.isArray = isArray;
+
+  /* Alias of isEmpty(). Can be used by plugins. */
+  Template.isEmpty = isEmpty;
 
   /* Alias of indexOf(). Can be used by plugins. */
   Template.indexOf = indexOf;
@@ -436,12 +464,17 @@
     return new Template(content);
   }
 
+  function isEmptyValue(value) {
+    var isObject = typeof value === 'object' && value !== null;
+    return (!isObject && !value) || (isObject && Template.isEmpty(value));
+  }
+
   // Block plugin. Handles positive conditionals and arrays.
   Template.plugins['#'] = function (token, value, data, tokens) {
     var template = getBlockTemplate(token, tokens);
 
-    if (!value) {
-      content = '';
+    if (isEmptyValue(value)) {
+      return '';
     } else if (Template.isArray(value)) {
       return (function () {
         var items  = [],
@@ -455,12 +488,9 @@
         }
         return items.join('');
       })();
-    } else {
-      // We have an end block render index as a new template.
-      content = template.render(data);
     }
-
-    return content;
+    // We have an end block render index as a new template.
+    return template.render(data);
   };
 
   // Closing block. Does nothing but register the '/' prefix for
@@ -474,11 +504,10 @@
   // block if the value of the token is false. Used as a
   // else block.
   Template.plugins['^'] = function (token, value, data, tokens) {
-    var template = getBlockTemplate(token, tokens),
-        isTruthy = value && !(Template.isArray(value) && !value.length);
+    var template = getBlockTemplate(token, tokens);
 
     // We have an end block render index as a new template.
-    return isTruthy ? '' : template.render(data);
+    return isEmptyValue(value) ? template.render(data) : '';
   };
 
 }).call(this.template.Template);
