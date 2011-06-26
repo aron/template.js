@@ -65,6 +65,12 @@ vows.describe('template()').addBatch({
       assert.equal(topic, 'bill');
     }
   },
+  'should if key is a function should call it and use result': {
+    topic: template('{{.}}', function () { return 'bill' }),
+    'should use bill in the template string': function (topic) {
+      assert.equal(topic, 'bill');
+    }
+  },
   '{{#block}}{{/block}}': {
     'should render the contents of a block': {
       topic: template('{{#block}}{{block.content}}{{/block}}', {block: {content: 'hello'}}),

@@ -371,6 +371,10 @@
         if (typeof token === 'object') {
           // Update the replaced token.
           parsed = escapeHTML(this.lookup(token, data));
+          if (typeof parsed === 'function') {
+            parsed = parsed();
+          }
+
           if (Template.plugins[token.prefix]) {
             parsed = Template.plugins[token.prefix].call(
               this, token, parsed, data, tokens

@@ -8,7 +8,6 @@ differences are:
  - Supports keypaths in tokens.
  - __NO__ support for partials.
  - __NO__ comments.
- - __NO__ support for functions (yet).
  - Probably missing a few more things I don't use.
 
 [#mustache]: http://mustache.github.com/
