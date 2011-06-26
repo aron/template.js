@@ -13,6 +13,14 @@ vows.describe('template()').addBatch({
       assert.equal(topic, 'this is a word in a string');
     }
   },
+  'should escape HTML special characters into entities': {
+    topic: function () {
+      return template('{{token}}', {token: '&, \', ", /, <, >'});
+    },
+    'token should be replaced with "word"': function (topic) {
+      assert.equal(topic, '&amp;, &#x27, &quot;, &#x2F;, &lt;, &gt;');
+    }
+  },
   'should throw an error if the closing braces are missing': {
     topic: '{{block',
     'an error should be thrown': function (topic) {

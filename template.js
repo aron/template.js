@@ -7,7 +7,7 @@
 /*jslint indent: 2 */
 (function (undefined) {
 
-  var isArray, isEmpty, indexOf;
+  var isArray, isEmpty, indexOf, escapeHTML;
 
   /* Public: Tests to see if an object is an Array.
    *
@@ -80,6 +80,32 @@
       }
     }
     return -1;
+  };
+
+  /* Public: Escapes HTML special characters within a string. Used to prevent
+   * XSS attacks. Replace functions literally taken from Backbone.js.
+   * http://github.com/documentcloud/backbone/blob/master/backbone.js
+   *
+   * Replaces &, <, >, ", ', /  characters.
+   * 
+   * string - A String to escape.
+   *
+   * Examples
+   *
+   *   example
+   *
+   * Returns a string with HTML special characters escaped.
+   */
+  escapeHTML = function (string) {
+    if (typeof string === 'string') {
+      string = string.replace(/&(?!\w+;|#\d+;|#x[\da-f]+;)/gi, '&amp;')
+                 .replace(/</g,  '&lt;')
+                 .replace(/>/g,  '&gt;')
+                 .replace(/"/g,  '&quot;')
+                 .replace(/'/g,  '&#x27')
+                 .replace(/\//g, '&#x2F;');
+    }
+    return string;
   };
 
   /* Public: Creates a Template instance that can then be rendered
@@ -344,7 +370,7 @@
         // See if we have a token.
         if (typeof token === 'object') {
           // Update the replaced token.
-          parsed = this.lookup(token, data);
+          parsed = escapeHTML(this.lookup(token, data));
           if (Template.plugins[token.prefix]) {
             parsed = Template.plugins[token.prefix].call(
               this, token, parsed, data, tokens

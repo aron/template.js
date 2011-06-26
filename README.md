@@ -9,7 +9,6 @@ differences are:
  - __NO__ support for partials.
  - __NO__ comments.
  - __NO__ support for functions (yet).
- - __NO__ HTML escaping (yet)!
  - Probably missing a few more things I don't use.
 
 [#mustache]: http://mustache.github.com/
