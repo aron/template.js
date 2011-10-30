@@ -5,9 +5,9 @@
  */
 
 /*jslint indent: 2 */
-(function (undefined) {
+(function (context, undefined) {
 
-  var isArray, isEmpty, indexOf, escapeHTML;
+  var isArray, isEmpty, indexOf, escapeHTML, template;
 
   /* Public: Tests to see if an object is an Array.
    *
@@ -447,102 +447,111 @@
     }
   };
 
-  this.template = function (string, data, options) {
+  template = function (string, data, options) {
     return (new Template(string, data, options)).render();
   };
-  this.template.Template = Template;
+  template.Template = Template;
 
-}).call(this);
+  // Export function depending on environment.
+  if (typeof context.define === 'function' && context.define.amd) {
+    context.define('template', function () {
+      return template;
+    });
+  } else if (context.exports) {
+    context.exports = template;
+  } else {
+    context.template = template;
+  }
 
-// Plugins
-(function () {
-  var Template = this;
+  // Plugins
+  (function () {
 
-  // Finds the closing block for a token. Handles nested blocks.
-  function findEndBlock(tokens, key, closePrefix) {
-    var nested = 0, offset = 0, index, prefix;
+    // Finds the closing block for a token. Handles nested blocks.
+    function findEndBlock(tokens, key, closePrefix) {
+      var nested = 0, offset = 0, index, prefix;
 
-    while (true) {
-      // Get the next token.
-      index = Template.indexOf(tokens.slice(offset), key) + offset;
+      while (true) {
+        // Get the next token.
+        index = Template.indexOf(tokens.slice(offset), key) + offset;
 
-      if (index > -1) {
-        prefix = tokens[index - 1];
-        if (prefix === closePrefix) {
-          if (nested === 0) {
-            return index - 2;
+        if (index > -1) {
+          prefix = tokens[index - 1];
+          if (prefix === closePrefix) {
+            if (nested === 0) {
+              return index - 2;
+            } else {
+              offset = index + 1;
+              nested -= 1;
+            }
           } else {
             offset = index + 1;
-            nested -= 1;
+            nested += 1;
           }
         } else {
-          offset = index + 1;
-          nested += 1;
+          break;
         }
-      } else {
-        break;
       }
-    }
-    return -1;
-  }
-
-  function getBlockTemplate(token, tokens) {
-    // Check to see if it's block.
-    var index = findEndBlock(tokens, token.value, '/'),
-        content, template;
-
-    if (index === -1) {
-      throw 'Missing closing block for: ' + token.toString();
+      return -1;
     }
 
-    // Remove the parsed block. And return it as a template string.
-    content = tokens.splice(0, tokens.slice(0, index).length).join('');
-    return new Template(content);
-  }
+    function getBlockTemplate(token, tokens) {
+      // Check to see if it's block.
+      var index = findEndBlock(tokens, token.value, '/'),
+          content, template;
 
-  function isEmptyValue(value) {
-    var isObject = typeof value === 'object' && value !== null;
-    return (!isObject && !value) || (isObject && Template.isEmpty(value));
-  }
+      if (index === -1) {
+        throw 'Missing closing block for: ' + token.toString();
+      }
 
-  // Block plugin. Handles positive conditionals and arrays.
-  Template.plugins['#'] = function (token, value, data, tokens) {
-    var template = getBlockTemplate(token, tokens);
+      // Remove the parsed block. And return it as a template string.
+      content = tokens.splice(0, tokens.slice(0, index).length).join('');
+      return new Template(content);
+    }
 
-    if (isEmptyValue(value)) {
+    function isEmptyValue(value) {
+      var isObject = typeof value === 'object' && value !== null;
+      return (!isObject && !value) || (isObject && Template.isEmpty(value));
+    }
+
+    // Block plugin. Handles positive conditionals and arrays.
+    Template.plugins['#'] = function (token, value, data, tokens) {
+      var template = getBlockTemplate(token, tokens);
+
+      if (isEmptyValue(value)) {
+        return '';
+      } else if (Template.isArray(value)) {
+        return (function () {
+          var items  = [],
+              length = value.length,
+              i = 0, current;
+
+          for (; i < length; i += 1) {
+            items.push(template.render(value[i]));
+          }
+          return items.join('');
+        })();
+      }
+      // We have an end block render index as a new template.
+      return template.render(data);
+    };
+
+    // Closing block. Does nothing but register the '/' prefix for
+    // the block plugin.
+    Template.plugins['/'] = function () {
+      // Remove the block.
       return '';
-    } else if (Template.isArray(value)) {
-      return (function () {
-        var items  = [],
-            length = value.length,
-            i = 0, current;
+    };
 
-        for (; i < length; i += 1) {
-          items.push(template.render(value[i]));
-        }
-        return items.join('');
-      })();
-    }
-    // We have an end block render index as a new template.
-    return template.render(data);
-  };
+    // Inverse conditional block. Returns the contents of the
+    // block if the value of the token is false. Used as a
+    // else block.
+    Template.plugins['^'] = function (token, value, data, tokens) {
+      var template = getBlockTemplate(token, tokens);
 
-  // Closing block. Does nothing but register the '/' prefix for
-  // the block plugin.
-  Template.plugins['/'] = function () {
-    // Remove the block.
-    return '';
-  };
+      // We have an end block render index as a new template.
+      return isEmptyValue(value) ? template.render(data) : '';
+    };
 
-  // Inverse conditional block. Returns the contents of the
-  // block if the value of the token is false. Used as a
-  // else block.
-  Template.plugins['^'] = function (token, value, data, tokens) {
-    var template = getBlockTemplate(token, tokens);
+  })();
 
-    // We have an end block render index as a new template.
-    return isEmptyValue(value) ? template.render(data) : '';
-  };
-
-}).call(this.template.Template);
-
+})(typeof module !== 'undefined' ? module : this);

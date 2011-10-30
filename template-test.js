@@ -2,7 +2,7 @@
 /*global require, module*/
 var vows     = require('vows'),
     assert   = require('assert'),
-    template = require('./template.js').template;
+    template = require('./template');
 
 vows.describe('template()').addBatch({
   'should parse simple tokens': {
@@ -231,4 +231,3 @@ vows.describe('template()').addBatch({
     }
   }
 }).export(module);
-
